@@ -3,7 +3,7 @@ from binance.client import Client
 api_key = 'YOUR API KEY'
 api_secret = 'YOUR API SECRET'
 
-client = Client(api_key, api_secret, tld='us')
+client = Client(api_key, api_secret)
 
 account_info = client.get_account()
 print(account_info)
