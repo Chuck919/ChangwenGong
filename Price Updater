@@ -1,1 +1,43 @@
+from API import api_key, api_secret
 
+from binance.client import Client
+import time
+import threading
+from decimal import Decimal, ROUND_DOWN
+
+#api_key = 'API Key'
+#api_secret = 'API Secret'
+
+
+client = Client(api_key, api_secret)
+
+crypto_bots = {}
+
+class PriceUpdater:
+    def __init__(self, crypto_bots):
+        self.crypto_bots = crypto_bots
+        self.running = False
+        self.thread = None
+
+    def start(self):
+        self.running = True
+        self.thread = threading.Thread(target=self.update_prices)
+        self.thread.start()
+
+    def stop(self):
+        self.running = False
+        if self.thread:
+            self.thread.join()
+
+    def get_current_price(self):
+        tickers = client.get_all_tickers()
+        return tickers
+
+    def update_prices(self):
+      while self.running:
+        current_price = self.get_current_price()
+        for instance in crypto_bots.values():
+            instance.price_check(current_price)
+            
+        #print(current_price)
+        time.sleep(1)
