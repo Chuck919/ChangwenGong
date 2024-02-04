@@ -46,6 +46,34 @@ class Algorithms:
     def __init__ (self):
         pass
     
+    def vwap(self, klines):
+        vwap_values = []
+        
+        cumulative_ttp = 0
+        cumulative_volume = 0
+        
+        for kline in klines:
+            high_price = float(kline[2])
+            low_price = float(kline[3])
+            close_price = float(kline[4])
+            volume = float(kline[5])
+            
+            tp = (high_price + low_price + close_price) / 3
+            ttp = tp*volume
+            
+            cumulative_ttp += ttp
+            cumulative_volume += volume
+            
+            if cumulative_volume != 0:
+                vwap = cumulative_ttp / cumulative_volume
+                
+            else:
+                vwap = vwap_values [-1] if vwap_values else 0
+                
+            vwap_values.append(vwap)
+            
+        return vwap_values
+    
     def ema(self, data, window):
         alpha = 2/(window +1)
         ema = [data[0]]
@@ -149,6 +177,17 @@ class Check:
     def rsi_check(self, rsi):
         return 'SELL' if rsi >= 70 else 'BUY' if rsi <= 30 else None
     
+    def vwap_check(self, vwap, new_price):
+        if vwap[-2] < new_price and vwap[-1] > new_price: 
+            return 'SELL'
+        
+        elif vwap[-2] > new_price and vwap[-1] < new_price:
+            return 'BUY'
+        
+        else:
+            return None
+            
+    
     
 class AlgoBot:
     def __init__(self, key, variables):
@@ -169,7 +208,7 @@ class AlgoBot:
         
     def main(self, new_price):
         interval = Client.KLINE_INTERVAL_1MINUTE
-        limit = 1000
+        limit = 50
         
         klines = client.get_historical_klines(self.symbol, interval, limit=limit)
         
@@ -199,6 +238,11 @@ class AlgoBot:
             
             signal = check.roc_check(algos.roc(closing_prices, params))
             self.signals['roc'] = signal
+            
+        if 'vwap' in self.checks:
+            signal = check.vwap_check(algos.vwap(klines), new_price)
+            print(f'vwap : {algos.vwap(klines)}')
+            self.signals['vwap'] = signal
             
         print(self.signals)
         
@@ -252,10 +296,8 @@ bots_dict = {
         'symbol' : 'BTCUSDT',
         'use' : 100,
         'Heikin Ashi' : 'y',
-        'roc': 9,
-        'macd' :[12, 26, 9],
-        'rsi' : 9
-    }
+        'vwap' : 'y'
+}
 }
 
 crypto_bots = {}
